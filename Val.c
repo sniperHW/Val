@@ -303,7 +303,7 @@ Node *New_Key(TVal_table *t,TKey *key)
    for(i=0;i < T->cap;++i)								\
    {													\
    	n = NODE(T,i);										\
-   	if(!n){ n = malloc(sizeof(*n));						\
+   	if(!n){ n = calloc(1,sizeof(*n));					\
    			T->node[i] = n;								\
    			break;										\
    	} 													\
@@ -314,12 +314,12 @@ Node *New_Key(TVal_table *t,TKey *key)
 	size_t idx = INDEX(t,key->hashcode);
 	Node  *n   = NODE(t,idx);
 	if(!n){
-		n = malloc(sizeof(*n));
+		n = calloc(1,sizeof(*n));
 		SET_KEY(n->i_key,*key);
 		n->i_val   	 = NULL;
 		t->node[idx] = n;
 	}else if(n->i_key.tt != TVAL_NONE && 0 != Key_Equal(&n->i_key,key)){
-		//colliding
+		//colliding		
 		size_t mainpos = INDEX(t,n->i_key.hashcode);
 		Node *othern  = EMPTYPLACE(t);
 		assert(othern);
@@ -330,7 +330,7 @@ Node *New_Key(TVal_table *t,TKey *key)
 		if(idx == mainpos)//othern in mainpos
 			n->i_key.next = othern;
 		else{//othern not in mainpos
-			Node *m = t->node[INDEX(t,othern->i_key.hashcode)];
+			Node *m = t->node[mainpos];
 			while(m->i_key.next != n)
 				m = m->i_key.next;
 			m->i_key.next = othern;
@@ -390,8 +390,8 @@ static int table_resize(TVal_table *t,size_t newcap)
 					if(idx == mainpos)
 						n->i_key.next  = othern;
 					else{
-						Node *m = t->node[INDEX(t,othern->i_key.hashcode)];
-						while(m->i_key.next != n)
+						Node *m = t->node[mainpos];
+						while(m->i_key.next != othern)
 							m = m->i_key.next;
 						m->i_key.next = othern;
 					}					
@@ -919,6 +919,24 @@ int pushVal(lua_State *L,TValue *v)
 	return 0;
 }
 
+void TVal_table_show_list(TValue *v)
+{
+	if(v->tt == TVAL_TABLE){
+		TVal_table *t = cast(TVal_table*,v);
+		size_t i = 0;
+		for(;i < t->nsize;++i){
+			Node *n = t->node[i];
+			printf("list:\n");
+			while(n){
+				if(n->i_val){
+					TVal_print(n->i_val);printf(",");
+				}
+				n = n->i_key.next;
+			}
+			printf("\n");
+		}
+	}
+}
 
 void TVal_print(TValue *v){
 	switch(TVal_type(v)){

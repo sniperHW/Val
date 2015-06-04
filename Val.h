@@ -76,6 +76,7 @@ void 		TVal_table_seti(TValue *t,Val_Integer key,TValue *val);
 void 		TVal_table_setb(TValue *t,Val_Boolean key,TValue *val);
 void 		TVal_table_setn(TValue *t,Val_Number  key,TValue *val);
 void 		TVal_table_sets(TValue *t,const char *key,TValue *val);
+void        TVal_table_show_list(TValue *t);
 
 static const iter nil_iter = {.i=-1,.key=NULL,.value=NULL};
 
