@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include "Val.h"
 
+static int objc = 0;
+
 typedef union { double u; void *s; Val_Integer i; long l; } L_Umaxalign;
 
 typedef struct TVal_string{
@@ -90,6 +92,7 @@ TValue    *TVal_New_integer(Val_Integer i){
 	v->value.i = i;
 	v->rcount  = 1;
 	v->dctor   = free;
+	objc++;
 	return v;
 }
 
@@ -99,6 +102,7 @@ TValue     *TVal_New_number(Val_Number n){
 	v->value.n = n;
 	v->rcount  = 1;
 	v->dctor   = free;
+	objc++;
 	return v;
 }
 
@@ -108,6 +112,7 @@ TValue     *TVal_New_boolean(int b){
 	v->value.b = b;
 	v->rcount  = 1;
 	v->dctor   = free;
+	objc++;
 	return v;
 }
 
@@ -124,7 +129,8 @@ TValue     *TVal_New_lstring(const char *str,size_t len){
 	ptr[len] = 0;
 	v->dctor   = free;
 	v->value.o = cast(void*,v);
-	v->tt      = TVAL_STRING;	
+	v->tt      = TVAL_STRING;
+	objc++;	
 	return cast(TValue*,v); 	
 }
 
@@ -190,6 +196,7 @@ TValue *TVal_retain(TValue *v){
 void TVal_release(TValue *v){
 	if(v && --v->rcount == 0){
 		v->dctor(v);
+		objc--;
 	}
 }
 
@@ -509,7 +516,8 @@ TValue     *TVal_New_table()
 	table->node    = calloc(INIT_SIZE,sizeof(*table->node));
 	table->dctor   = table_dcotr;
 	table->value.o = cast(void*,table);
-	table->tt      = TVAL_TABLE;	
+	table->tt      = TVAL_TABLE;
+	objc++;	
 	return cast(TValue*,table); 	
 }
 
@@ -585,7 +593,8 @@ TValue     *TVal_New_array()
 	array->array   = calloc(INIT_SIZE,sizeof(*array->array));
 	array->dctor   = array_dcotr;
 	array->value.o = cast(void*,array);
-	array->tt      = TVAL_ARRAY;	
+	array->tt      = TVAL_ARRAY;
+	objc++;	
 	return cast(TValue*,array); 	
 }
 
@@ -969,4 +978,8 @@ void TVal_print(TValue *v){
 			break;
 		}
 	}
+}
+
+int         TVal_objc(){
+	return objc;
 }

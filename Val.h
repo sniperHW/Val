@@ -103,4 +103,6 @@ void        TVal_release(TValue*);
 
 void        TVal_print(TValue*);
 
+int         TVal_objc();
+
 #endif

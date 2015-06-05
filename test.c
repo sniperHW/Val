@@ -46,6 +46,8 @@ int main(){
 			printf("%s\n",lua_tostring(L,-1));
 			return 0;
 		}
+
+		TVal_release(v);
 	}
 
 	printf("test remove\n");
@@ -124,8 +126,11 @@ int main(){
 			printf("key:");TVal_print(it.key);
 			printf(",value:");TVal_print(it.value);printf("\n");
 			it = TVal_next(array,&it);
-		}	
+		}
+		TVal_release(array);	
 	}
+
+	printf("total TValue count:%d\n",TVal_objc());
 		
 	return 0;
 }
