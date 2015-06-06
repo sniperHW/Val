@@ -230,17 +230,13 @@ static inline unsigned int hashnum(Val_Number n)
 #define INDEX(T,H) H%T->cap
 #define NODE(T,I)  T->node[I]
 
+
 int   Key_Equal(TKey *key1,TKey *key2)
 {
 	if(key1->tt == key2->tt && key1->hashcode == key2->hashcode){
 		switch(key1->tt){
 			case TVAL_INTEGER:
 			case TVAL_BOOLEAN:
-			{
-				if(key1->i == key2->i)
-					return 0;
-				break;
-			}
 			case TVAL_NUMBER:
 			{
 				if(key1->n == key2->n)
@@ -273,6 +269,7 @@ do{																\
 	}															\
 }while(0)
 
+//clear all field except next
 #define CLEAR_KEY(K1)											\
 do{																\
 	if((K1).tt == TVAL_NONE) break;								\
@@ -289,7 +286,7 @@ static inline void table_dcotr(void *_)
 	TVal_table *t = cast(TVal_table*,_);
 	size_t i;
 	for(i=0;i < t->cap;++i){
-		Node *n = t->node[i];
+		Node *n = NODE(t,i);
 		if(n){
 			CLEAR_KEY(n->i_key);
 			TVal_release(n->i_val);
@@ -311,7 +308,7 @@ Node *New_Key(TVal_table *t,TKey *key)
    {													\
    	n = NODE(T,i);										\
    	if(!n){ n = calloc(1,sizeof(*n));					\
-   			T->node[i] = n;								\
+   			NODE(T,i) = n;								\
    			break;										\
    	} 													\
    	else if(!n->i_val) break;							\
@@ -324,7 +321,7 @@ Node *New_Key(TVal_table *t,TKey *key)
 		n = calloc(1,sizeof(*n));
 		SET_KEY(n->i_key,*key);
 		n->i_val   	 = NULL;
-		t->node[idx] = n;
+		NODE(t,idx)  = n;
 	}else if(n->i_key.tt != TVAL_NONE && 0 != Key_Equal(&n->i_key,key)){
 		//colliding		
 		size_t mainpos = INDEX(t,n->i_key.hashcode);
@@ -337,7 +334,7 @@ Node *New_Key(TVal_table *t,TKey *key)
 		if(idx == mainpos)//othern in mainpos
 			n->i_key.next = othern;
 		else{//othern not in mainpos
-			Node *m = t->node[mainpos];
+			Node *m = NODE(t,mainpos);
 			while(m->i_key.next != n)
 				m = m->i_key.next;
 			m->i_key.next = othern;
@@ -362,7 +359,7 @@ static int table_resize(TVal_table *t,size_t newcap)
 #define EMPTYPLACE(T)							\
 ({ size_t i;									\
    for(i=0;i < T->cap;++i)						\
-   		if(!T->node[i])break; 					\
+   		if(!NODE(T,i))break; 					\
    i;})
 	
 	if(newcap > MAX_NODE_SIZE) return -1;
@@ -384,20 +381,20 @@ static int table_resize(TVal_table *t,size_t newcap)
 			}else{
 				n->i_key.next = NULL;
 				size_t idx = n->i_key.hashcode%newcap;
-				if(!t->node[idx]){
-					t->node[idx] = n;
+				if(!NODE(t,idx)){
+					NODE(t,idx) = n;
 				}
 				else{
 					//colliding
-					Node *othern = t->node[idx];
+					Node *othern = NODE(t,idx);
 					size_t mainpos = othern->i_key.hashcode%newcap;
 					size_t empty = EMPTYPLACE(t);
-					t->node[empty] = othern;
-					t->node[idx]   = n;		
+					NODE(t,empty) = othern;
+					NODE(t,idx) = n;	
 					if(idx == mainpos)
 						n->i_key.next  = othern;
 					else{
-						Node *m = t->node[mainpos];
+						Node *m = NODE(t,mainpos);
 						while(m->i_key.next != othern)
 							m = m->i_key.next;
 						m->i_key.next = othern;
@@ -420,7 +417,7 @@ void TVal_Set(TVal_table *t,TKey *key,TValue *val)
 		if(!val){
 			printf("remove:%ld\n",n->i_val->value.i);
 			size_t mainpos = n->i_key.hashcode%t->cap;
-			Node *m = t->node[mainpos];
+			Node *m = NODE(t,mainpos);
 			if(m != n){
 				while(m->i_key.next != n)
 					m = m->i_key.next;
