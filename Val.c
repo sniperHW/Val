@@ -532,7 +532,7 @@ static iter  TVal_table_next(TValue *_,iter *it)
 	}
 
 	do{
-		if(++i > t->cap)
+		if(++i >= t->cap)
 			return nil_iter;
 		n = t->node[i];
 		if(n && n->i_val)
@@ -707,10 +707,9 @@ static iter  TVal_array_next(TValue *_,iter *it)
 		TVal_release(it->value);
 		TVal_release(it->key);
 		do{
-			if(++i > a->nsize)
+			if(++i >= a->nsize)
 				return nil_iter;
-			v = a->array[i];
-			if(v)
+			if((v = a->array[i]))
 				break;
 		}while(1);
 	}
